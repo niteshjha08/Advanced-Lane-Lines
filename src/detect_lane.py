@@ -23,14 +23,41 @@ def get_histogram(img):
     return histogram
 
 def main():
-    img=cv2.imread('./../test_images/straight_lines1.jpg')
+    img=cv2.imread('./../test_images/test2.jpg')
     undist=undistort_img(img)
     bin_img=get_binary(undist)
     warped=perspective_transform(bin_img)
-    hist=get_histogram(warped)
-    cv2.imshow('bin_img',bin_img)
-    plt.plot(hist)
-    plt.show()
+    draw_boxes(warped)
+    # hist=get_histogram(warped)
+    # cv2.imshow('bin_img',bin_img)
+    # plt.plot(hist)
+    # plt.show()
+    # cv2.waitKey()
+
+def draw_boxes(img):
+    margin=100
+    nwindows=9
+    window_size=80
+    left_indices=[]
+    right_indices=[]
+    shape=img.shape
+    copy=img.copy()
+    for window in range(nwindows):
+        copy=copy[:shape[0]-window*window_size,:]
+        hist=get_histogram(copy)
+        hist_left=hist[:int(hist.shape[0]/2)]
+        hist_right=hist[int(hist.shape[0]/2):]
+        left_max=np.argmax(hist_left)
+        right_max=np.argmax(hist_right)
+        left_indices.append(left_max)
+        right_indices.append(right_max)
+
+    for window in range(nwindows):
+        cv2.rectangle(img,(left_indices[window]-int(window_size/2),shape[0]-window*window_size),\
+                      (left_indices[window]+int(window_size/2),shape[0]-(window+1)*window_size),255,3)
+        cv2.rectangle(img, (int(hist.shape[0]/2)+right_indices[window] - int(window_size / 2), shape[0]-window*window_size), \
+                     (int(hist.shape[0]/2)+right_indices[window] + int(window_size / 2),shape[0]-(window+1)*window_size), (255), 3)
+    cv2.imshow('img',img)
     cv2.waitKey()
 
 if __name__=='__main__':
