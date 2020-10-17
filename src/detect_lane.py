@@ -29,7 +29,10 @@ def main():
     warped=perspective_transform(bin_img)
     # draw_boxes(warped)
     leftx,lefty,rightx,righty,imgbox = sliding_window(warped)
-    imgcolor=fit_line(leftx,lefty,rightx,righty,imgbox)
+    imgcolor,R_left,R_right=fit_line(leftx,lefty,rightx,righty,imgbox)
+    cv2.putText(imgcolor,"Radius_left:{}".format(R_left),(img.shape[1]//4,img.shape[0]//2),cv2.FONT_HERSHEY_SIMPLEX,1,(0,0,255),2)
+    cv2.putText(imgcolor, "Radius_right:{}".format(R_right), ( 3*img.shape[1] // 4,img.shape[0] // 2),
+                cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
     cv2.imshow('fit', imgcolor)
     cv2.waitKey()
 
@@ -151,8 +154,14 @@ def fit_line(leftx,lefty,rightx,righty,img):
     right_pairs=right_pairs.reshape(-1,1,2)
     cv2.polylines(img,[left_pairs],False,(0,255,0),5)
     cv2.polylines(img,[right_pairs],False,(0,255,0),5)
+    R_left=get_rad_curvature(left_coeff[0],left_coeff[1],img.shape[0])
+    R_right=get_rad_curvature(right_coeff[0],right_coeff[1],img.shape[0])
 
-    return img
+    return img,R_left,R_right
+
+def get_rad_curvature(A,B,y):
+    R=(1+(2*A*y + B)**2)**(3/2)/(2*A)
+    return R
 
 
 if __name__=='__main__':
