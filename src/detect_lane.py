@@ -1,8 +1,9 @@
 import cv2
 import numpy as np
 import pickle
-from binary_tuner import mag_sobel,abs_sobel_mag, dir_sobel, perspective_transform, inv_perspective_transform, undistort_img, get_perspective_mtx,\
-                        get_inv_perspective_mtx, get_distortion_measure, get_sobel_mag
+from binary_tuner import mag_sobel,abs_sobel_mag, dir_sobel, get_sobel_mag, hls_thresh,color_thresh
+from perspective_transformations import perspective_transform, inv_perspective_transform, undistort_img, get_perspective_mtx,\
+                        get_inv_perspective_mtx, get_distortion_measure
 import time
 import matplotlib.pyplot as plt
 from moviepy.editor import VideoFileClip
@@ -10,13 +11,20 @@ from moviepy.editor import VideoFileClip
 
 def get_binary(img):
     sobelx,actualsobelx=abs_sobel_mag(img,'x',(28,153))
+    #cv2.imshow('sobelx',cv2.resize(sobelx,(sobelx.shape[1]//3,sobelx.shape[0]//3)))
     sobely,actualsobely=abs_sobel_mag(img,'y',(49,211))
+    #cv2.imshow('sobely', cv2.resize(sobely,(sobelx.shape[1]//3,sobelx.shape[0]//3)))
     #mag_sob=mag_sobel(img,(40,206))
     mag_sob=get_sobel_mag(img,actualsobelx,actualsobely,(40,206))
+    #cv2.imshow('mag_sob', cv2.resize(mag_sob,(sobelx.shape[1]//3,sobelx.shape[0]//3)))
+    #hue_bin=hls_thresh(img,channel='h',(15,90))
+    #cv2.imshow('hue', cv2.resize(hue_bin,(sobelx.shape[1]//3,sobelx.shape[0]//3)))
     #dir_sob=dir_sobel(img,(47,144))
+    color_bin=color_thresh(img)
     bin_img=np.zeros_like(sobelx)
     #bin_img[((sobelx==255) & (sobely==255))& ((dir_sob==255) | (mag_sob==255))]=255
-    bin_img[((sobelx == 255) & (sobely == 255)) & (mag_sob == 255)] = 255
+    #bin_img[((sobelx == 255) & (sobely == 255)& (mag_sob == 255) ) | ((color_bin==255))   ] = 255
+    bin_img[(mag_sob == 255)| ((color_bin == 255))] = 255
     return bin_img
 
 def get_histogram(img):
@@ -24,48 +32,22 @@ def get_histogram(img):
     histogram=np.sum(half_img,axis=0)
     return histogram
 
-def process_img(img):
-    #img=cv2.imread('./../test_images/test2.jpg')
-    undist=undistort_img(img,mtx,dist)
-    bin_img=get_binary(undist)
-    warped=perspective_transform(bin_img,M)
-    # draw_boxes(warped)
-    leftx,lefty,rightx,righty,imgbox = sliding_window(warped)
-    box=img.copy()
-    imgcolor,R_left,R_right,left_pairs,right_pairs=fit_line(leftx,lefty,rightx,righty,imgbox)
-    filled=fill_lane(left_pairs,right_pairs,imgcolor)
-    filled_rev_warp=inv_perspective_transform(filled,Minv)
-    final=cv2.addWeighted(box,0.8,filled_rev_warp,0.5,0)
-    cv2.putText(final, "Radius_left:{}".format(R_left), (img.shape[1] // 4, img.shape[0] // 2),
-                cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
-    cv2.putText(final, "Radius_right:{}".format(R_right), (3 * img.shape[1] // 4, img.shape[0] // 2),
-                cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
-    #cv2.imshow('filled',final)
-    return final
-
-
 
 def process_video():
-    cap=cv2.VideoCapture('./../project_video.mp4')
-    M=get_perspective_mtx()
-    Minv=get_inv_perspective_mtx()
+    cap=cv2.VideoCapture('./../trimmed_video.mp4')
     ret,mtx,dist,rvecs,tvecs=get_distortion_measure()
     while(cv2.waitKey(1)!=ord('q')):
         ret,img=cap.read()
-        process_img(img,M,Minv,mtx,dist)
+        process_img(img)
 
 M = get_perspective_mtx()
 Minv = get_inv_perspective_mtx()
 ret, mtx, dist, rvecs, tvecs = get_distortion_measure()
 
-def timepass(img):
-    cv2.putText(img,"Nitesh",(img.shape[1]//2,img.shape[0]//2),cv2.FONT_HERSHEY_SIMPLEX,2,(0,0,255),1)
-    return img
-
 
 def get_video():
     videoloc='./../project_video.mp4'
-    white_output='myoutput.mp4'
+    white_output='checkvid.mp4'
 
     clip1 = VideoFileClip("./../project_video.mp4")
     white_clip = clip1.fl_image(process_img)  # NOTE: this function expects color images!!
@@ -142,7 +124,7 @@ def sliding_window(img):
         right_x_low = rightx_current - margin
         right_x_high = rightx_current + margin
 
-        cv2.rectangle(imgcolor,(left_x_low,y_low),(left_x_high,y_high),(0,0,255),2)
+        cv2.rectangle(imgcolor,(left_x_low,y_low),(left_x_high,y_high),(255,255,255),2)
         cv2.rectangle(imgcolor, (right_x_low, y_low), (right_x_high, y_high), (255, 0, 0), 2)
 
 
@@ -208,10 +190,35 @@ def fill_lane(left_pairs,right_pairs,img):
     pts = np.array([left_pairs, np.flipud(right_pairs)])
     pts = np.concatenate(pts)
     cv2.fillPoly(img, [pts], (0, 255, 0))
+    #cv2.imshow('filllane',img)
     return img
+
+def process_img(img):
+    #img=cv2.imread('./../test_images/test2.jpg')
+    undist=undistort_img(img,mtx,dist)
+    bin_img=get_binary(undist)
+    warped=perspective_transform(bin_img,M)
+    cv2.imshow('binary', warped)
+    leftx,lefty,rightx,righty,imgbox = sliding_window(warped)
+    box=img.copy()
+    imgcolor,R_left,R_right,left_pairs,right_pairs=fit_line(leftx,lefty,rightx,righty,imgbox)
+    filled=fill_lane(left_pairs,right_pairs,imgcolor)
+    filled_rev_warp=inv_perspective_transform(filled,Minv)
+    final=cv2.addWeighted(box,0.5,filled_rev_warp,0.5,0)
+    cv2.putText(final, "Radius_left:{}".format(R_left), (img.shape[1] // 4, img.shape[0] // 2),
+                cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
+    cv2.putText(final, "Radius_right:{}".format(R_right), (3 * img.shape[1] // 4, img.shape[0] // 2),
+                cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
+    cv2.imshow('filled',final)
+    return final
 
 
 if __name__=='__main__':
-    #process_video()
+    # process_video()
     # check()
-    get_video()
+    #
+     frame=cv2.imread('./new_tests/test_img26.jpg')
+     final=process_img(frame)
+     cv2.imshow('final',final)
+     cv2.waitKey()
+     #get_video()
