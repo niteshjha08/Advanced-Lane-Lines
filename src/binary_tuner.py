@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 import pickle
 import math
-
+from perspective_transformations import perspective_transform
 # cap=cv2.VideoCapture('project_video.mp4')
 
 
@@ -57,6 +57,17 @@ def dir_sobel(img,thresh=(0,np.pi/2),ksize=3):
     return binary_op
 
 def pipeline(image):
+    #image=cv2.cvtColor(image,cv2.COLOR_BGR2GRAY)
+    cv2.namedWindow('tune')
+    cv2.namedWindow('tune1')
+    cv2.createTrackbar('lowerx', 'tune', 0, 255, nothing)
+    cv2.createTrackbar('upperx', 'tune', 0, 255, nothing)
+    cv2.createTrackbar('lowery', 'tune', 0, 255, nothing)
+    cv2.createTrackbar('uppery', 'tune', 0, 255, nothing)
+    cv2.createTrackbar('mag_lower', 'tune1', 0, 255, nothing)
+    cv2.createTrackbar('mag_upper', 'tune1', 0, 255, nothing)
+    cv2.createTrackbar('dir_low', 'tune1', 0, 255, nothing)
+    cv2.createTrackbar('dir_upper', 'tune1', 0, 255, nothing)
     while(cv2.waitKey(10)!=ord('q')):
         lowerx=cv2.getTrackbarPos('lowerx','tune') # (28,153)
         upperx=cv2.getTrackbarPos('upperx','tune')
@@ -66,21 +77,20 @@ def pipeline(image):
         mag_upper=cv2.getTrackbarPos('mag_upper','tune1')
         dir_low=cv2.getTrackbarPos('dir_low','tune1')/100   # (47,144)
         dir_upper=cv2.getTrackbarPos('dir_upper','tune1')/100
-        sobelx=abs_sobel_mag(image,'x',(lowerx,upperx))
-        sobely = abs_sobel_mag(image, 'y', (lowery, uppery))
+        sobelx,_=abs_sobel_mag(image,'x',(lowerx,upperx))
+        sobely,_= abs_sobel_mag(image, 'y', (lowery, uppery))
         mag_sob=mag_sobel(image,(mag_lower,mag_upper))
         dir_sob=dir_sobel(image,(dir_low,dir_upper))
         binary_img=np.zeros_like(sobelx)
         binary_img[((sobelx==255) & (sobely==255))& ((dir_sob==255) | (mag_sob==255))]=255
-        warpimg,orig=perspective_transform(binary_img)
+
 
         cv2.imshow('sobelx',cv2.resize(sobelx,(int(sobelx.shape[1]/2),int(sobelx.shape[0]/2))))
         cv2.imshow('sobely', cv2.resize(sobely, (int(sobely.shape[1] / 2), int(sobely.shape[0] / 2))))
         cv2.imshow('mag', cv2.resize(mag_sob, (int(sobely.shape[1] / 2), int(sobely.shape[0] / 2))))
         cv2.imshow('dir', cv2.resize(dir_sob, (int(sobelx.shape[1] / 2), int(sobelx.shape[0] / 2))))
         cv2.imshow('bin', cv2.resize(binary_img, (int(sobelx.shape[1] / 2), int(sobelx.shape[0] / 2))))
-        cv2.imshow('warp', cv2.resize(warpimg, (int(sobelx.shape[1] / 2), int(sobelx.shape[0] / 2))))
-        cv2.imshow('orig', cv2.resize(orig, (int(sobelx.shape[1] / 2), int(sobelx.shape[0] / 2))))
+
 
 
 def main():
@@ -157,6 +167,11 @@ def color_thresh(img):
     sat_bin[(s_channel > 80) & (s_channel < 255)] = 255
     bin1=np.zeros_like(h_channel)
     bin1[(hue_bin==255)&(sat_bin==255)]=255
+    # cv2.imshow('binHA',bin1)
+    # cv2.imshow('actual was this', img)
+    # cv2.imshow('hue was this', hue_bin)
+    # cv2.imshow('sat was this', sat_bin)
+    # cv2.waitKey()
     return bin1
 
 
@@ -164,8 +179,9 @@ def color_thresh(img):
 if __name__=='__main__':
     #main()
     print("running main")
-    frame = cv2.imread('./new_tests/test_img26.jpg')
+    frame = cv2.imread('./new_tests/test_img25.jpg')
     #hls_tuner(frame)
     color_thresh(frame)
+    #pipeline(frame)
 
 

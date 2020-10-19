@@ -10,17 +10,19 @@ from moviepy.editor import VideoFileClip
 
 
 def get_binary(img):
-    sobelx,actualsobelx=abs_sobel_mag(img,'x',(28,153))
+    sobelx,actualsobelx=abs_sobel_mag(img,'x',(40,153))
     #cv2.imshow('sobelx',cv2.resize(sobelx,(sobelx.shape[1]//3,sobelx.shape[0]//3)))
     sobely,actualsobely=abs_sobel_mag(img,'y',(49,211))
     #cv2.imshow('sobely', cv2.resize(sobely,(sobelx.shape[1]//3,sobelx.shape[0]//3)))
     #mag_sob=mag_sobel(img,(40,206))
-    mag_sob=get_sobel_mag(img,actualsobelx,actualsobely,(40,206))
+    mag_sob=get_sobel_mag(img,actualsobelx,actualsobely,(64,255))
     #cv2.imshow('mag_sob', cv2.resize(mag_sob,(sobelx.shape[1]//3,sobelx.shape[0]//3)))
     #hue_bin=hls_thresh(img,channel='h',(15,90))
     #cv2.imshow('hue', cv2.resize(hue_bin,(sobelx.shape[1]//3,sobelx.shape[0]//3)))
     #dir_sob=dir_sobel(img,(47,144))
     color_bin=color_thresh(img)
+
+    #cv2.imshow('col_thr', cv2.resize(color_bin, (sobelx.shape[1] // 3, sobelx.shape[0] // 3)))
     bin_img=np.zeros_like(sobelx)
     #bin_img[((sobelx==255) & (sobely==255))& ((dir_sob==255) | (mag_sob==255))]=255
     #bin_img[((sobelx == 255) & (sobely == 255)& (mag_sob == 255) ) | ((color_bin==255))   ] = 255
@@ -34,9 +36,9 @@ def get_histogram(img):
 
 
 def process_video():
-    cap=cv2.VideoCapture('./../trimmed_video.mp4')
+    cap=cv2.VideoCapture('./../project_video.mp4')
     ret,mtx,dist,rvecs,tvecs=get_distortion_measure()
-    while(cv2.waitKey(1)!=ord('q')):
+    while(cv2.waitKey(10)!=ord('q')):
         ret,img=cap.read()
         process_img(img)
 
@@ -195,10 +197,11 @@ def fill_lane(left_pairs,right_pairs,img):
 
 def process_img(img):
     #img=cv2.imread('./../test_images/test2.jpg')
+    img=cv2.cvtColor(img,cv2.COLOR_RGB2BGR)
     undist=undistort_img(img,mtx,dist)
     bin_img=get_binary(undist)
     warped=perspective_transform(bin_img,M)
-    cv2.imshow('binary', warped)
+    #cv2.imshow('binary123', bin_img)
     leftx,lefty,rightx,righty,imgbox = sliding_window(warped)
     box=img.copy()
     imgcolor,R_left,R_right,left_pairs,right_pairs=fit_line(leftx,lefty,rightx,righty,imgbox)
@@ -210,15 +213,16 @@ def process_img(img):
     cv2.putText(final, "Radius_right:{}".format(R_right), (3 * img.shape[1] // 4, img.shape[0] // 2),
                 cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
     cv2.imshow('filled',final)
+    final=cv2.cvtColor(final,cv2.COLOR_BGR2RGB)
     return final
 
 
 if __name__=='__main__':
-    # process_video()
+     #process_video()
     # check()
     #
-     frame=cv2.imread('./new_tests/test_img26.jpg')
-     final=process_img(frame)
-     cv2.imshow('final',final)
-     cv2.waitKey()
-     #get_video()
+     # frame=cv2.imread('./new_tests/test_img25.jpg')
+     # final=process_img(frame)
+     # #cv2.imshow('final',final)
+     # cv2.waitKey()
+    get_video()
