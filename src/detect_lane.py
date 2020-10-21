@@ -10,12 +10,12 @@ from moviepy.editor import VideoFileClip
 
 
 def get_binary(img):
-    sobelx,actualsobelx=abs_sobel_mag(img,'x',(40,153))
+    #sobelx,actualsobelx=abs_sobel_mag(img,'x',(40,153))
     #cv2.imshow('sobelx',cv2.resize(sobelx,(sobelx.shape[1]//3,sobelx.shape[0]//3)))
-    sobely,actualsobely=abs_sobel_mag(img,'y',(49,211))
+    #sobely,actualsobely=abs_sobel_mag(img,'y',(49,211))
     #cv2.imshow('sobely', cv2.resize(sobely,(sobelx.shape[1]//3,sobelx.shape[0]//3)))
     #mag_sob=mag_sobel(img,(40,206))
-    mag_sob=get_sobel_mag(img,actualsobelx,actualsobely,(64,255))
+    mag_sob=mag_sobel(img,(64,255))
     #cv2.imshow('mag_sob', cv2.resize(mag_sob,(sobelx.shape[1]//3,sobelx.shape[0]//3)))
     #hue_bin=hls_thresh(img,channel='h',(15,90))
     #cv2.imshow('hue', cv2.resize(hue_bin,(sobelx.shape[1]//3,sobelx.shape[0]//3)))
@@ -23,7 +23,7 @@ def get_binary(img):
     color_bin=color_thresh(img)
 
     #cv2.imshow('col_thr', cv2.resize(color_bin, (sobelx.shape[1] // 3, sobelx.shape[0] // 3)))
-    bin_img=np.zeros_like(sobelx)
+    bin_img=np.zeros_like(mag_sob)
     #bin_img[((sobelx==255) & (sobely==255))& ((dir_sob==255) | (mag_sob==255))]=255
     #bin_img[((sobelx == 255) & (sobely == 255)& (mag_sob == 255) ) | ((color_bin==255))   ] = 255
     bin_img[(mag_sob == 255)| ((color_bin == 255))] = 255
@@ -49,23 +49,13 @@ ret, mtx, dist, rvecs, tvecs = get_distortion_measure()
 
 def get_video():
     videoloc='./../project_video.mp4'
-    white_output='checkvid.mp4'
+    white_output='updated_video.mp4'
 
     clip1 = VideoFileClip("./../project_video.mp4")
     white_clip = clip1.fl_image(process_img)  # NOTE: this function expects color images!!
     white_clip.write_videofile(white_output, audio=False)
 
-def check():
-    img = cv2.imread('./../test_images/test2.jpg')
-    gray=cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
-    warped = perspective_transform(gray)
-    revwarp= inv_perspective_transform(warped)
-    merged=cv2.addWeighted(gray,0.5,revwarp,0.5,0)
-    cv2.imshow('orig',gray)
-    cv2.imshow('rev',revwarp)
-    cv2.imshow('merge',merged)
 
-    cv2.waitKey()
 def draw_boxes(img):
     margin=100
     nwindows=9
@@ -196,24 +186,28 @@ def fill_lane(left_pairs,right_pairs,img):
     return img
 
 def process_img(img):
+    cv2.imshow('actual input',img)
     #img=cv2.imread('./../test_images/test2.jpg')
     img=cv2.cvtColor(img,cv2.COLOR_RGB2BGR)
     undist=undistort_img(img,mtx,dist)
+    cv2.imshow('undistorted',undist)
     bin_img=get_binary(undist)
+    blank_img = np.zeros_like(bin_img)
+    blank_color=np.dstack((blank_img,blank_img,blank_img))
+    print(blank_img.shape)
     warped=perspective_transform(bin_img,M)
-    #cv2.imshow('binary123', bin_img)
     leftx,lefty,rightx,righty,imgbox = sliding_window(warped)
-    box=img.copy()
+    box=undist.copy()
+    print(box.shape)
     imgcolor,R_left,R_right,left_pairs,right_pairs=fit_line(leftx,lefty,rightx,righty,imgbox)
-    filled=fill_lane(left_pairs,right_pairs,imgcolor)
+    Rad_curve=(R_left+R_right)/2
+    filled=fill_lane(left_pairs,right_pairs,blank_color)
     filled_rev_warp=inv_perspective_transform(filled,Minv)
-    final=cv2.addWeighted(box,0.5,filled_rev_warp,0.5,0)
-    cv2.putText(final, "Radius_left:{}".format(R_left), (img.shape[1] // 4, img.shape[0] // 2),
-                cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
-    cv2.putText(final, "Radius_right:{}".format(R_right), (3 * img.shape[1] // 4, img.shape[0] // 2),
-                cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
-    cv2.imshow('filled',final)
+    final=cv2.addWeighted(box,1,filled_rev_warp,0.3,0)
+    cv2.putText(final, "Radius of curvature:{:.2f}".format(Rad_curve), (10, 30),
+                cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
     final=cv2.cvtColor(final,cv2.COLOR_BGR2RGB)
+    cv2.imshow('filled223', final)
     return final
 
 
