@@ -147,6 +147,25 @@ def sliding_window(img):
     #cv2.waitKey()
     return leftx,lefty,rightx,righty,imgcolor
 
+# This function takes input from one image which has been fit with curve(sliding_window-->fit_line-->search_around_poly-->fit_line-->search_around_poly...)
+def search_around_poly(img):
+    nonzero=img.nonzero()
+    nonzerox=nonzero[0]
+    nonzeroy=nonzero[1]
+
+    left_lane_inds=((nonzerox > nonzeroy**2*left_coeff[0] + nonzeroy*left_coeff[1]+left_coeff[2]-margin)&\
+                   (nonzerox < nonzeroy**2*left_coeff[0] + nonzeroy*left_coeff[1]+left_coeff[2]+margin)).nonzero()[0]
+    right_lane_inds=((nonzerox > nonzeroy**2*right_coeff[0] + nonzeroy*right_coeff[1]+right_coeff[2]-margin)&\
+                   (nonzerox < nonzeroy**2*right_coeff[0] + nonzeroy*right_coeff[1]+right_coeff[2]+margin)).nonzero()[0]
+
+    leftx=nonzerox[left_lane_inds]
+    lefty=nonzeroy[left_lane_inds]
+    rightx=nonzerox[right_lane_inds]
+    righty=nonzeroy[right_lane_inds]
+    # Now send it to fit_line which will give new coefficients of fit. Then use it again for searching lanes in the next frame.
+
+
+
 def fit_line(leftx,lefty,rightx,righty,img):
     #imgcolor=np.dstack((img,img,img))
     left_coeff=np.polyfit(lefty,leftx,2)
