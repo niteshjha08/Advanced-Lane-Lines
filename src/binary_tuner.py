@@ -167,11 +167,7 @@ def color_thresh(img):
     sat_bin[(s_channel > 80) & (s_channel < 255)] = 255
     bin1=np.zeros_like(h_channel)
     bin1[(hue_bin==255)&(sat_bin==255)]=255
-    # cv2.imshow('binHA',bin1)
-    # cv2.imshow('actual was this', img)
-    # cv2.imshow('hue was this', hue_bin)
-    # cv2.imshow('sat was this', sat_bin)
-    # cv2.waitKey()
+
     return bin1
 
 

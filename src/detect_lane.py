@@ -16,22 +16,10 @@ right_coeff=np.zeros((3,1))
 first_run=True
 
 def get_binary(img):
-    #sobelx,actualsobelx=abs_sobel_mag(img,'x',(40,153))
-    #cv2.imshow('sobelx',cv2.resize(sobelx,(sobelx.shape[1]//3,sobelx.shape[0]//3)))
-    #sobely,actualsobely=abs_sobel_mag(img,'y',(49,211))
-    #cv2.imshow('sobely', cv2.resize(sobely,(sobelx.shape[1]//3,sobelx.shape[0]//3)))
-    #mag_sob=mag_sobel(img,(40,206))
-    mag_sob=mag_sobel(img,(64,255))
-    #cv2.imshow('mag_sob', cv2.resize(mag_sob,(sobelx.shape[1]//3,sobelx.shape[0]//3)))
-    #hue_bin=hls_thresh(img,channel='h',(15,90))
-    #cv2.imshow('hue', cv2.resize(hue_bin,(sobelx.shape[1]//3,sobelx.shape[0]//3)))
-    #dir_sob=dir_sobel(img,(47,144))
-    color_bin=color_thresh(img)
 
-    #cv2.imshow('col_thr', cv2.resize(color_bin, (sobelx.shape[1] // 3, sobelx.shape[0] // 3)))
+    mag_sob=mag_sobel(img,(64,255))
+    color_bin=color_thresh(img)
     bin_img=np.zeros_like(mag_sob)
-    #bin_img[((sobelx==255) & (sobely==255))& ((dir_sob==255) | (mag_sob==255))]=255
-    #bin_img[((sobelx == 255) & (sobely == 255)& (mag_sob == 255) ) | ((color_bin==255))   ] = 255
     bin_img[(mag_sob == 255)| ((color_bin == 255))] = 255
     return bin_img
 
@@ -53,7 +41,7 @@ def process_video():
 
 def get_video():
 
-    white_output='project_video_output.mp4'
+    white_output='project_video_changed_colorthresh.mp4'
 
     clip1 = VideoFileClip("./../project_video.mp4")
     white_clip = clip1.fl_image(process_img)  # NOTE: this function expects color images!!
@@ -96,7 +84,7 @@ def sliding_window(img):
     shape = img.shape
     window_height=shape[0]//nwindows
 
-    minpix=10
+    minpix=50
 
     hist=get_histogram(img)
     midpoint = hist.shape[0] // 2
@@ -204,7 +192,7 @@ def draw_current_lanes(img):
     left_margin=fill_lane(left_lmargin,left_rmargin,blank_color,(0,0,255))
     both_margins=fill_lane(right_lmargin,right_rmargin,left_margin,(0,0,255))
     cv2.imshow('left lanes leftright',both_margins)
-    cv2.waitKey()
+
 
     return both_margins
 
@@ -238,15 +226,20 @@ def fit_line(leftx,lefty,rightx,righty,img):
     cv2.polylines(img,[left_pairs],False,(0,255,0),5)
     cv2.polylines(img,[right_pairs],False,(0,255,0),5)
     cv2.imshow('only fit lines',img)
-    R_left=get_rad_curvature(left_coeff[0],left_coeff[1],img.shape[0])
-    R_right=get_rad_curvature(right_coeff[0],right_coeff[1],img.shape[0])
-
+    R_left,R_right=radius_curvature(leftx,lefty,rightx,righty)
+    print("lane_width:",lane_width)
     return img,R_left,R_right,left_pairs,right_pairs,lane_offset,lane_width
 
 
-def get_rad_curvature(A,B,y):
-    R=(1+(2*A*y + B)**2)**(3/2)/(2*A)
-    return R
+def radius_curvature(leftx,lefty,rightx,righty):
+    scalex= 3.7/700
+    scaley=30/720
+    y=719
+    left_fit_coeff=np.polyfit(lefty*scaley,leftx*scalex,2)
+    right_fit_coeff=np.polyfit(righty*scaley,rightx*scalex,2)
+    R_left=(1+(2*left_fit_coeff[0]*y*scaley + left_fit_coeff[1])**2)**(3/2)/(2*left_fit_coeff[0])
+    R_right=(1+(2*right_fit_coeff[0]*y*scaley + right_fit_coeff[1])**2)**(3/2)/(2*right_fit_coeff[0])
+    return R_left,R_right
 
 
 def fill_lane(left_pairs,right_pairs,img,color=(0,255,0)):
@@ -259,29 +252,43 @@ def fill_lane(left_pairs,right_pairs,img,color=(0,255,0)):
 def process_img(img):
     global first_run
     #img=cv2.imread('./../test_images/test2.jpg')
+    cv2.imshow('actualinput',img)
     img=cv2.cvtColor(img,cv2.COLOR_RGB2BGR)
     undist=undistort_img(img,mtx,dist)
     bin_img=get_binary(undist)
+    cv2.imshow('binary',bin_img)
     blank_img = np.zeros_like(bin_img)
     blank_color=np.dstack((blank_img,blank_img,blank_img))
     warped=perspective_transform(bin_img,M)
+    cv2.imshow('warpedimg',warped)
     box = undist.copy()
     if(first_run):
         leftx,lefty,rightx,righty,imgbox = sliding_window(warped)
+        cv2.imshow('imgbox',imgbox)
     else:
-        #search_margin=draw_current_lanes(warped)
+        search_margin=draw_current_lanes(warped)
         leftx,lefty,rightx,righty,imgbox = search_around_poly(warped)
 
     imgcolor,R_left,R_right,left_pairs,right_pairs, lane_offset, lane_width=fit_line(leftx,lefty,rightx,righty,imgbox)
+    cv2.imshow('fit_line',imgcolor)
     Rad_curve=(R_left+R_right)/2
     filled=fill_lane(left_pairs,right_pairs,blank_color)
+    cv2.imshow('filllane example',filled)
 
     filled_rev_warp=inv_perspective_transform(filled,Minv)
+
     final = cv2.addWeighted(box, 1, filled_rev_warp, 0.3, 0)
-    # if(first_run==False):
-    #     search_margin_persp = inv_perspective_transform(search_margin, Minv)
-    #     cv2.imshow('search_margin',search_margin_persp)
-    #     final=cv2.addWeighted(final,1,search_margin_persp,0.4,0)
+    if(first_run==False):
+        warped_color=np.dstack((warped,warped,warped))
+        bin_color=np.dstack((bin_img,bin_img,bin_img))
+        print(search_margin.shape)
+        print(warped.shape)
+        search_margin_persp = inv_perspective_transform(search_margin, Minv)
+        cv2.imshow('search_margin',search_margin_persp)
+        marginimg=cv2.addWeighted(warped_color,1,search_margin,0.4,0)
+        maginpersp=cv2.addWeighted(bin_color,1,search_margin_persp,0.3,0)
+        cv2.imshow('marginimg',marginimg)
+        cv2.imshow('marginpersp',maginpersp)
     lane_width= lane_width * 3.7 /685
     lane_offset= lane_offset * 3.7/685
     if(lane_offset<0):
@@ -302,11 +309,13 @@ def process_img(img):
                # cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
     final=cv2.cvtColor(final,cv2.COLOR_BGR2RGB)
     cv2.imshow('filled223', final)
+    cv2.imshow('undist',cv2.cvtColor(undist,cv2.COLOR_BGR2RGB))
     first_run=False
-    #cv2.waitKey()
+    cv2.waitKey()
     return final
 
 
 if __name__=='__main__':
-     #process_video()
-     get_video()
+     process_video()
+     #get_video()
+     #process_img()

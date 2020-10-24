@@ -27,11 +27,6 @@ ret,mtx,dist,rvecs,tvecs=cv2.calibrateCamera(objectpoints,imagepoints,gray.shape
 calib_param=[ret,mtx,dist,rvecs,tvecs]
 with open('calib_param.pickle','wb') as f:
     pickle.dump(calib_param,f)
-# img=cv2.imread('test_images/test1.jpg')
-# undist=cv2.undistort(img,mtx,dist,None,mtx)
-# cv2.imshow('undist',undist)
-# cv2.imshow('img',img)
-# cv2.waitKey()
 
 
 
