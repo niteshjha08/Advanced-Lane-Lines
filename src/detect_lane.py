@@ -4,7 +4,7 @@ import pickle
 from binary_tuner import mag_sobel,abs_sobel_mag, dir_sobel, get_sobel_mag, hls_thresh,color_thresh
 from perspective_transformations import perspective_transform, inv_perspective_transform, undistort_img, get_perspective_mtx,\
                         get_inv_perspective_mtx, get_distortion_measure
-import time
+import matplotlib.pyplot as plt
 from moviepy.editor import VideoFileClip
 
 
@@ -27,6 +27,9 @@ def get_binary(img):
 def get_histogram(img):
     half_img=img[int(img.shape[0]/2):,:]
     histogram=np.sum(half_img,axis=0)
+    plt.plot(histogram)
+    plt.show()
+
     return histogram
 
 
