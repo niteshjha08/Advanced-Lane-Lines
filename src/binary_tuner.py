@@ -56,7 +56,7 @@ def dir_sobel(img,thresh=(0,np.pi/2),ksize=3):
     binary_op[(dir_sobel > thresh[0]) & (dir_sobel < thresh[1])] = 255
     return binary_op
 
-def pipeline(image):
+def tuner_function(image):
     #image=cv2.cvtColor(image,cv2.COLOR_BGR2GRAY)
     cv2.namedWindow('tune')
     cv2.namedWindow('tune1')
