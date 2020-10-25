@@ -97,7 +97,7 @@ OpenCV function `getPerspectiveTransform()` was used to get the perspective matr
 ![colorimg,trapezium](https://github.com/niteshjha08/Advanced-Lane-Lines/blob/master/writeup_images/perspectivepoints.PNG) 
 *imagepoints selection*
 ![imagewarp](https://github.com/niteshjha08/Advanced-Lane-Lines/blob/master/writeup_images/perspectivepoints_result.PNG)
-*resultant "birds-eye view"
+*resultant "birds-eye view"*
 
 
 This step is applied in the pipeline to binary-thresholded images. The output is shown below:
