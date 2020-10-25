@@ -16,6 +16,7 @@ The goals / steps of this project are the following:
 * Warp the detected lane boundaries back onto the original image.
 * Output visual display of the lane boundaries and numerical estimation of lane curvature and vehicle position.
 
+[Here](https://youtu.be/0hgbzgZueTA) is a link to the youtube video of the output. It is also available in this repository: ['project_video_final.mp4'](https://github.com/niteshjha08/Advanced-Lane-Lines/blob/master/project_video_final.mp4)
 ## Dependencies
 * Python 3
 * OpenCV-Python
