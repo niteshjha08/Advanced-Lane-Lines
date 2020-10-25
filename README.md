@@ -51,10 +51,13 @@ Then run `detect_lane.py` after altering the output video filename in `get_video
 
 ## Camera Calibration
 The code for calibration procedure is in the file  [calibrate.py](https://github.com/niteshjha08/Advanced-Lane-Lines/blob/master/src/calibrate.py)
+
 * Images from [*camera_cal*](https://github.com/niteshjha08/Advanced-Lane-Lines/tree/master/camera_cal) was used for calibration. 9x6 chessboard images were used and OpenCV functions to calibrate the camera.  
+
 * Imagepoints, i.e. image corners were found using `findChessboardCorners()` function and objectpoints were manually coded to lie in a plane (z=0). Then `calibrateCamera()` was used to obtain camera matrix, distortion coefficients, rvecs and tvecs. These parameters were saved in the file `calib_param.pickle` to be used later.
 
 Here is an example of this result:
+
 
 <img src="https://github.com/niteshjha08/Advanced-Lane-Lines/blob/master/writeup_images/calibration1_distorted.jpg" width="500" height="280"/>*Distorted chessboard image* 
 
@@ -90,10 +93,12 @@ As images are from the car's perspective, obtaining lane information such as cur
 * Imagepoints are hard-coded for this, and the desired destination points are written down accordingly.
 
 OpenCV function `getPerspectiveTransform()` was used to get the perspective matrix and was then stored in `perspective_mtx.pickle`. The inverse matrix was also found and stored in `inverse_perspective_mtx.pickle` for inverse projection in the later stages of the pipeline. `warpPespective()` was used to perform the transformation of image. The result of this perspective transformation is shown below.
+
 ![colorimg,trapezium](https://github.com/niteshjha08/Advanced-Lane-Lines/blob/master/writeup_images/perspectivepoints.PNG) ![imagewarp]
 *imagepoints selection*
 (https://github.com/niteshjha08/Advanced-Lane-Lines/blob/master/writeup_images/perspectivepoints_result.PNG)
 *resultant "birds-eye view"
+
 
 This step is applied in the pipeline to binary-thresholded images. The output is shown below:
 ![warped_binary](https://github.com/niteshjha08/Advanced-Lane-Lines/blob/master/writeup_images/warped.PNG)
@@ -156,3 +161,4 @@ The `fill_lane()` function fills the detected lane boundaries.
 ## Reflection
 This project used advanced computer vision techniques and accounted for a variety of features in the pipeline for robust results. However, there are conditions where this might fail. For example, vehicles in close proximity would not allow for a clear "birds-eye view", or road marking very close to lanes might still sway the results. As thresholds for binary image generation is hard-coded, there might be particular situation where they may not hold good and pipeline would fail. 
 More adaptive techniques like deep neural networks would possibly give better results in such cases.
+
