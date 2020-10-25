@@ -2,6 +2,7 @@
 
 ![final_img](https://github.com/niteshjha08/Advanced-Lane-Lines/blob/master/writeup_images/final_output.PNG)
 
+## Project Overview
 Detect lane lines in a little more flexible conditions (curvature, lighting variations, camera distortions) using computer vision techniques. This is an extension of the [*Basic lane detection*](https://github.com/niteshjha08/Basic_Lane_detection) which was constrained to straight lines and region-specific search.
 
 The goals / steps of this project are the following:
@@ -15,19 +16,51 @@ The goals / steps of this project are the following:
 * Warp the detected lane boundaries back onto the original image.
 * Output visual display of the lane boundaries and numerical estimation of lane curvature and vehicle position.
 
+## Dependencies
+* Python 3
+* OpenCV-Python
+* Numpy
+* Matplotlib
+* Moviepy
+* Pickle
+
+## Structure of repository:
+* [*camera_cal*](https://github.com/niteshjha08/Advanced-Lane-Lines/tree/master/camera_cal): Contains images used for camera calibration and distortion correction
+* [*test_images*](https://github.com/niteshjha08/Advanced-Lane-Lines/tree/master/test_images): Contains test images used to evaluate the pipeline
+* [*output_images*](https://github.com/niteshjha08/Advanced-Lane-Lines/tree/master/output_images): Contains output of test images in various stages of the pipeline:
+	* Undistorted
+	* Binary
+	* Warped (perspective-transformed)
+	* Image histogram
+	* Polynomial fits (sliding window and margin search)
+	* Final annotated output
+* [*src*](https://github.com/niteshjha08/Advanced-Lane-Lines/tree/master/src): Contains python files and saved parameter files used for this project:
+	* [*binary_tuner.py*](https://github.com/niteshjha08/Advanced-Lane-Lines/blob/master/src/binary_tuner.py): Thresholding functions and combined binary image generation functons
+	* [*calibrate.py*](https://github.com/niteshjha08/Advanced-Lane-Lines/blob/master/src/calibrate.py): camera calibration functions 
+	* [*perspective_transformations.py*](https://github.com/niteshjha08/Advanced-Lane-Lines/blob/master/src/perspective_transformations.py): functions for creating perspective matrices, reading and transforming images.
+	* [*detect_lane.py*](https://github.com/niteshjha08/Advanced-Lane-Lines/blob/master/src/detect_lane.py): Code for integrating final pipeline and generating results.
+	* [*generate_test_images*](): [Optional for use] To create additional test images where pipeline may be underperforming. 
+* [*writeup_images*](https://github.com/niteshjha08/Advanced-Lane-Lines/tree/master/writeup_images): images used for this writeup
+* [*project_video_final.mp4*](https://github.com/niteshjha08/Advanced-Lane-Lines/blob/master/project_video_final.mp4): Annotated video of the raw input 'project_video.mp4' using the pipeline
+
+## How to run
+
+Run `calibrate.py` to generate `calib_param.pickle` in the src directory. Also run functions `write_perspective_mtx()` and `write_inv_perspective_mtx()` from `perspective_transformations.py` to generate perspective and inverse matrices.
+Then run `detect_lane.py` after altering the output video filename in `get_video()` functon.
+---
+
 ## Camera Calibration
 The code for calibration procedure is in the file  [calibrate.py](https://github.com/niteshjha08/Advanced-Lane-Lines/blob/master/src/calibrate.py)
-* Images from [*camera_cal*]() was used for calibration. 9x6 chessboard images were used and OpenCV functions to calibrate the camera.  
+* Images from [*camera_cal*](https://github.com/niteshjha08/Advanced-Lane-Lines/tree/master/camera_cal) was used for calibration. 9x6 chessboard images were used and OpenCV functions to calibrate the camera.  
 * Imagepoints, i.e. image corners were found using `findChessboardCorners()` function and objectpoints were manually coded to lie in a plane (z=0). Then `calibrateCamera()` was used to obtain camera matrix, distortion coefficients, rvecs and tvecs. These parameters were saved in the file `calib_param.pickle` to be used later.
 
 Here is an example of this result:
-\
-![chessboard distorted](https://github.com/niteshjha08/Advanced-Lane-Lines/blob/master/writeup_images/calibration1_distorted.jpg)  
- 
-*Distorted chessboard image* 
-\
-![chess_undist](https://github.com/niteshjha08/Advanced-Lane-Lines/blob/master/writeup_images/calibration1_undist.jpg)
-*Undistorted (corrected image)*
+
+<img src="https://github.com/niteshjha08/Advanced-Lane-Lines/blob/master/writeup_images/calibration1_distorted.jpg" width="500" height="280"/>*Distorted chessboard image* 
+
+ <img src="https://github.com/niteshjha08/Advanced-Lane-Lines/blob/master/writeup_images/calibration1_undist.jpg" width="500" height="280"/>*Undistorted (corrected image)*
+
+
 
 ## Pipeline
 ### 1. Camera Calibration and Distortion correction
@@ -36,6 +69,7 @@ Here is an example of this result:
 
 ![Distorted](https://github.com/niteshjha08/Advanced-Lane-Lines/blob/master/writeup_images/distorted_input.PNG)  
 *Distorted frame*
+
 ![Undist](https://github.com/niteshjha08/Advanced-Lane-Lines/blob/master/writeup_images/undistorted.PNG)
 *Undistorted frame*
 
@@ -56,8 +90,10 @@ As images are from the car's perspective, obtaining lane information such as cur
 * Imagepoints are hard-coded for this, and the desired destination points are written down accordingly.
 
 OpenCV function `getPerspectiveTransform()` was used to get the perspective matrix and was then stored in `perspective_mtx.pickle`. The inverse matrix was also found and stored in `inverse_perspective_mtx.pickle` for inverse projection in the later stages of the pipeline. `warpPespective()` was used to perform the transformation of image. The result of this perspective transformation is shown below.
-![colorimg,trapezium](https://github.com/niteshjha08/Advanced-Lane-Lines/blob/master/writeup_images/perspectivepoints.PNG) ![imagewarp](https://github.com/niteshjha08/Advanced-Lane-Lines/blob/master/writeup_images/perspectivepoints_result.PNG)
-
+![colorimg,trapezium](https://github.com/niteshjha08/Advanced-Lane-Lines/blob/master/writeup_images/perspectivepoints.PNG) ![imagewarp]
+*imagepoints selection*
+(https://github.com/niteshjha08/Advanced-Lane-Lines/blob/master/writeup_images/perspectivepoints_result.PNG)
+*resultant "birds-eye view"
 
 This step is applied in the pipeline to binary-thresholded images. The output is shown below:
 ![warped_binary](https://github.com/niteshjha08/Advanced-Lane-Lines/blob/master/writeup_images/warped.PNG)
@@ -115,3 +151,8 @@ The `fill_lane()` function fills the detected lane boundaries.
 
 
 ![finalimg](https://github.com/niteshjha08/Advanced-Lane-Lines/blob/master/writeup_images/final_output.PNG)
+
+---
+## Reflection
+This project used advanced computer vision techniques and accounted for a variety of features in the pipeline for robust results. However, there are conditions where this might fail. For example, vehicles in close proximity would not allow for a clear "birds-eye view", or road marking very close to lanes might still sway the results. As thresholds for binary image generation is hard-coded, there might be particular situation where they may not hold good and pipeline would fail. 
+More adaptive techniques like deep neural networks would possibly give better results in such cases.

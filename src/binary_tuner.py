@@ -1,10 +1,5 @@
 import cv2
 import numpy as np
-import pickle
-import math
-from perspective_transformations import perspective_transform
-# cap=cv2.VideoCapture('project_video.mp4')
-
 
 def nothing(x):
     a=2

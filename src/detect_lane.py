@@ -30,6 +30,7 @@ def get_histogram(img):
     plt.plot(histogram)
     plt.show()
 
+
     return histogram
 
 
@@ -44,7 +45,7 @@ def process_video():
 
 def get_video():
 
-    white_output='project_video_changed_colorthresh.mp4'
+    white_output='project_video_final_2ndtry.mp4'
 
     clip1 = VideoFileClip("./../project_video.mp4")
     white_clip = clip1.fl_image(process_img)  # NOTE: this function expects color images!!
@@ -228,9 +229,8 @@ def fit_line(leftx,lefty,rightx,righty,img):
 
     cv2.polylines(img,[left_pairs],False,(0,255,0),5)
     cv2.polylines(img,[right_pairs],False,(0,255,0),5)
-    cv2.imshow('only fit lines',img)
+    cv2.imshow('fit_lines',img)
     R_left,R_right=radius_curvature(leftx,lefty,rightx,righty)
-    print("lane_width:",lane_width)
     return img,R_left,R_right,left_pairs,right_pairs,lane_offset,lane_width
 
 
@@ -254,8 +254,10 @@ def fill_lane(left_pairs,right_pairs,img,color=(0,255,0)):
 
 def process_img(img):
     global first_run
-    #img=cv2.imread('./../test_images/test2.jpg')
+    #img=cv2.imread('./../test_images/test1.jpg)
     cv2.imshow('actualinput',img)
+    if (first_run):
+        cv2.imwrite('distorted_input.jpg', img)
     img=cv2.cvtColor(img,cv2.COLOR_RGB2BGR)
     undist=undistort_img(img,mtx,dist)
     bin_img=get_binary(undist)
@@ -269,15 +271,14 @@ def process_img(img):
         leftx,lefty,rightx,righty,imgbox = sliding_window(warped)
         cv2.imshow('imgbox',imgbox)
     else:
-        search_margin=draw_current_lanes(warped)
-        leftx,lefty,rightx,righty,imgbox = search_around_poly(warped)
+
+        search_margin = draw_current_lanes(warped)
+        leftx, lefty, rightx, righty, imgbox = search_around_poly(warped)
 
     imgcolor,R_left,R_right,left_pairs,right_pairs, lane_offset, lane_width=fit_line(leftx,lefty,rightx,righty,imgbox)
-    cv2.imshow('fit_line',imgcolor)
+
     Rad_curve=(R_left+R_right)/2
     filled=fill_lane(left_pairs,right_pairs,blank_color)
-    cv2.imshow('filllane example',filled)
-
     filled_rev_warp=inv_perspective_transform(filled,Minv)
 
     final = cv2.addWeighted(box, 1, filled_rev_warp, 0.3, 0)
@@ -291,8 +292,7 @@ def process_img(img):
         marginimg=cv2.addWeighted(warped_color,1,search_margin,0.4,0)
         maginpersp=cv2.addWeighted(bin_color,1,search_margin_persp,0.3,0)
         cv2.imshow('marginimg',marginimg)
-        cv2.imshow('marginpersp',maginpersp)
-    lane_width= lane_width * 3.7 /685
+
     lane_offset= lane_offset * 3.7/685
     if(lane_offset<0):
         offset_direction="left"
@@ -308,11 +308,11 @@ def process_img(img):
                 cv2.FONT_HERSHEY_SIMPLEX, 2, (255, 255, 255), 2)
     cv2.putText(final, "Vehicle is {0:.2f}m {1} of center".format(lane_offset,offset_direction), (50, 100),
                 cv2.FONT_HERSHEY_SIMPLEX, 1.5, (255, 255, 255), 2)
-    #cv2.putText(final, "Lane Width: {:.2f}m".format(lane_width), (10, 90),
-               # cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
     final=cv2.cvtColor(final,cv2.COLOR_BGR2RGB)
     cv2.imshow('filled223', final)
     cv2.imshow('undist',cv2.cvtColor(undist,cv2.COLOR_BGR2RGB))
+    if (first_run):
+        cv2.imwrite('undistorted.jpg',cv2.cvtColor(undist,cv2.COLOR_BGR2RGB) )
     first_run=False
     cv2.waitKey()
     return final
