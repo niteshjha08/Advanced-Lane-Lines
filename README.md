@@ -44,9 +44,9 @@ The goals / steps of this project are the following:
 * [*project_video_final.mp4*](https://github.com/niteshjha08/Advanced-Lane-Lines/blob/master/project_video_final.mp4): Annotated video of the raw input 'project_video.mp4' using the pipeline
 
 ## How to run
-
 Run `calibrate.py` to generate `calib_param.pickle` in the src directory. Also run functions `write_perspective_mtx()` and `write_inv_perspective_mtx()` from `perspective_transformations.py` to generate perspective and inverse matrices.
 Then run `detect_lane.py` after altering the output video filename in `get_video()` functon.
+
 ---
 
 ## Camera Calibration
@@ -70,10 +70,10 @@ Here is an example of this result:
 * Calibration parameters are loaded from `calib_param.pickle` using `get_distortion_measure()` in calibrate.py.
 * Camera matrix and distortion coeff. are used to undistor the video frame (img).
 
-![Distorted](https://github.com/niteshjha08/Advanced-Lane-Lines/blob/master/writeup_images/distorted_input.PNG)  
+![Distorted](https://github.com/niteshjha08/Advanced-Lane-Lines/blob/master/writeup_images/distorted_input.jpg)  
 *Distorted frame*
 
-![Undist](https://github.com/niteshjha08/Advanced-Lane-Lines/blob/master/writeup_images/undistorted.PNG)
+![Undist](https://github.com/niteshjha08/Advanced-Lane-Lines/blob/master/writeup_images/undistorted.jpg)
 *Undistorted frame*
 
 
@@ -94,9 +94,9 @@ As images are from the car's perspective, obtaining lane information such as cur
 
 OpenCV function `getPerspectiveTransform()` was used to get the perspective matrix and was then stored in `perspective_mtx.pickle`. The inverse matrix was also found and stored in `inverse_perspective_mtx.pickle` for inverse projection in the later stages of the pipeline. `warpPespective()` was used to perform the transformation of image. The result of this perspective transformation is shown below.
 
-![colorimg,trapezium](https://github.com/niteshjha08/Advanced-Lane-Lines/blob/master/writeup_images/perspectivepoints.PNG) ![imagewarp]
+![colorimg,trapezium](https://github.com/niteshjha08/Advanced-Lane-Lines/blob/master/writeup_images/perspectivepoints.PNG) 
 *imagepoints selection*
-(https://github.com/niteshjha08/Advanced-Lane-Lines/blob/master/writeup_images/perspectivepoints_result.PNG)
+![imagewarp](https://github.com/niteshjha08/Advanced-Lane-Lines/blob/master/writeup_images/perspectivepoints_result.PNG)
 *resultant "birds-eye view"
 
 
